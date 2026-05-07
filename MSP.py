@@ -10,12 +10,12 @@ gray_transform = transforms.Compose([
     transforms.Grayscale(num_output_channels=3),
     transforms.Resize((32, 32)),
     transforms.ToTensor(),
-    transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
+    transforms.Normalize((0.4914, 0.4822, 0.4465),(0.2023, 0.1994, 0.2010))
 ])
 color_transform = transforms.Compose([
     transforms.Resize((32, 32)),
     transforms.ToTensor(),
-    transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
+    transforms.Normalize((0.4914, 0.4822, 0.4465),(0.2023, 0.1994, 0.2010))
 ])
 #IDデータ
 # CIFAR-100
@@ -54,7 +54,7 @@ model_ood.maxpool = nn.Identity()
 model_ood.fc = nn.Linear(model_ood.fc.in_features, 100)
 model_ood = model_ood.to(device)
 
-def train(model, loader, epochs=1):
+def train(model, loader, epochs=300):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0005)
     print(next(model.parameters()).device)
