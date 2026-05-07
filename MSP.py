@@ -62,7 +62,7 @@ model_ood.maxpool = nn.Identity()
 model_ood.fc = nn.Linear(model_ood.fc.in_features, 100)
 model_ood = model_ood.to(device)
 
-def train(model, loader, epochs=300):
+def train(model, loader, epochs=200):
     start = time.time()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0005)
@@ -165,7 +165,7 @@ def test_msp(model, id_loader, ood_loader):
     print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 import torch.nn.functional as F
-def odin_score(model, images, T=1000.0, epsilon=0.001):
+def odin_score(model, images, T=100.0, epsilon=0.001):
     model.eval()
     images = images.to(device)
     images.requires_grad = True
@@ -190,7 +190,7 @@ def odin_score(model, images, T=1000.0, epsilon=0.001):
     conf, _ = probs.max(dim=1)
     return conf.detach()
 
-def test_odin(model, id_loader, ood_loader, T=1000.0, epsilon=0.001):
+def test_odin(model, id_loader, ood_loader, T=100.0, epsilon=0.001):
     start = time.time()
     model.eval()
     id_scores = []
@@ -350,18 +350,30 @@ def compute_class_stats(model, loader, num_classes=100):
 def compute_precision(class_means, model, loader):
     model.eval()
 
-    all_features = []
+    diffs = []
 
     with torch.no_grad():
-        for images, _ in loader:
+        for images, labels in loader:
             images = images.to(device)
+
             feats = extract_features(model, images)
-            all_features.append(feats.cpu().numpy())
+            feats = feats.cpu().numpy()
 
-    all_features = np.concatenate(all_features, axis=0)
+            labels = labels.numpy()
 
-    cov = np.cov(all_features, rowvar=False)
-    precision = np.linalg.inv(cov + 1e-6 * np.eye(cov.shape[0]))
+            for f, y in zip(feats, labels):
+                diff = f - class_means[y]
+                diffs.append(diff)
+
+    diffs = np.array(diffs)
+
+    # クラス平均との差の共分散
+    cov = np.cov(diffs, rowvar=False)
+
+    # 数値安定化
+    cov += 1e-6 * np.eye(cov.shape[0])
+
+    precision = np.linalg.inv(cov)
 
     return precision
 
