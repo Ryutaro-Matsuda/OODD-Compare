@@ -65,26 +65,60 @@ model_ood = model_ood.to(device)
 def train(model, loader, epochs=200):
     start = time.time()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.0005)
+
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.1,
+        momentum=0.9,
+        weight_decay=5e-4
+    )
+
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[100, 150],
+        gamma=0.1
+    )
+
     print(next(model.parameters()).device)
 
     for epoch in range(epochs):
         model.train()
+
         total_loss = 0
+        correct = 0
+        total = 0
 
         for images, labels in loader:
-            images, labels = images.to(device), labels.to(device)
+            images = images.to(device)
+            labels = labels.to(device)
 
             outputs = model(images)
+
             loss = criterion(outputs, labels)
 
             optimizer.zero_grad()
+
             loss.backward()
+
             optimizer.step()
 
             total_loss += loss.item()
 
-        print(f"Epoch {epoch+1}, Loss: {total_loss:.3f}")
+            preds = outputs.argmax(dim=1)
+
+            correct += (preds == labels).sum().item()
+
+            total += labels.size(0)
+
+        scheduler.step()
+
+        acc = correct / total
+
+        print(
+            f"Epoch {epoch+1} | "
+            f"Loss: {total_loss:.3f} | "
+            f"Train Acc: {acc:.4f}"
+        )
     end = time.time()
     elapsed = end - start
     hours = int(elapsed // 3600)
