@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
+import time
 from sklearn.metrics import roc_auc_score
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader, ConcatDataset, Dataset
@@ -62,6 +63,7 @@ model_ood.fc = nn.Linear(model_ood.fc.in_features, 100)
 model_ood = model_ood.to(device)
 
 def train(model, loader, epochs=300):
+    start = time.time()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0005)
     print(next(model.parameters()).device)
@@ -83,12 +85,19 @@ def train(model, loader, epochs=300):
             total_loss += loss.item()
 
         print(f"Epoch {epoch+1}, Loss: {total_loss:.3f}")
+    end = time.time()
+    elapsed = end - start
+    hours = int(elapsed // 3600)
+    minutes = int((elapsed % 3600) // 60)
+    seconds = elapsed % 60
+    print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 print("=== OODモデル学習 ===")
 train(model_ood, train_loader_cifar100)
 
 
 def test_msp(model, id_loader, ood_loader):
+    start = time.time()
     model.eval()
     id_scores = []
     ood_scores = []
@@ -148,6 +157,12 @@ def test_msp(model, id_loader, ood_loader):
 
     print("AUROC:", auroc)
     print("FPR95:", fpr95)
+    end = time.time()
+    elapsed = end - start
+    hours = int(elapsed // 3600)
+    minutes = int((elapsed % 3600) // 60)
+    seconds = elapsed % 60
+    print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 import torch.nn.functional as F
 def odin_score(model, images, T=1000.0, epsilon=0.001):
@@ -176,6 +191,7 @@ def odin_score(model, images, T=1000.0, epsilon=0.001):
     return conf.detach()
 
 def test_odin(model, id_loader, ood_loader, T=1000.0, epsilon=0.001):
+    start = time.time()
     model.eval()
     id_scores = []
     ood_scores = []
@@ -224,6 +240,12 @@ def test_odin(model, id_loader, ood_loader, T=1000.0, epsilon=0.001):
 
     print("AUROC:", auroc)
     print("FPR95:", fpr95)
+    end = time.time()
+    elapsed = end - start
+    hours = int(elapsed // 3600)
+    minutes = int((elapsed % 3600) // 60)
+    seconds = elapsed % 60
+    print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 
 
@@ -238,6 +260,7 @@ def energy_score(model, images, T=1.0):
     return energy.cpu().numpy()
 
 def test_energy(model, id_loader, ood_loader, T=1.0):
+    start = time.time()
     model.eval()
     id_scores = []
     ood_scores = []
@@ -284,6 +307,12 @@ def test_energy(model, id_loader, ood_loader, T=1.0):
 
     print("AUROC:", auroc)
     print("FPR95:", fpr95)
+    end = time.time()
+    elapsed = end - start
+    hours = int(elapsed // 3600)
+    minutes = int((elapsed % 3600) // 60)
+    seconds = elapsed % 60
+    print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 def extract_features(model, x):
     # ResNet18用
@@ -337,6 +366,7 @@ def compute_precision(class_means, model, loader):
     return precision
 
 def mahalanobis_score(model, images, class_means, precision):
+
     model.eval()
     images = images.to(device)
 
@@ -358,6 +388,7 @@ def mahalanobis_score(model, images, class_means, precision):
     return np.array(scores)
 
 def test_mahalanobis(model, id_loader, ood_loader, class_means, precision):
+    start = time.time()
     id_scores = []
     ood_scores = []
 
@@ -400,6 +431,12 @@ def test_mahalanobis(model, id_loader, ood_loader, class_means, precision):
 
     print("AUROC:", auroc)
     print("FPR95:", fpr95)
+    end = time.time()
+    elapsed = end - start
+    hours = int(elapsed // 3600)
+    minutes = int((elapsed % 3600) // 60)
+    seconds = elapsed % 60
+    print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 def test_accuracy(model, loader):
     model.eval()
