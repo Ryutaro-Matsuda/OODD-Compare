@@ -27,7 +27,7 @@ train_transform = transforms.Compose([
 ])
 #IDデータ
 # CIFAR-100
-cifar100_train = datasets.CIFAR100(root='/workspace/data', train=True, download=True, transform=color_transform)
+cifar100_train = datasets.CIFAR100(root='/workspace/data', train=True, download=True, transform=train_transform)
 cifar100_test  = datasets.CIFAR100(root='/workspace/data', train=False, download=True, transform=color_transform)
 train_loader_cifar100 = DataLoader(cifar100_train, batch_size=64, shuffle=True)
 test_loader_cifar100  = DataLoader(cifar100_test, batch_size=64)
