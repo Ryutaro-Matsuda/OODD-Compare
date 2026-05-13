@@ -56,7 +56,7 @@ mnist_test = datasets.MNIST(
 test_loader_mnist   = DataLoader(mnist_test, batch_size=64)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model_ood = models.resnet18(pretrained=True)
+model_ood = models.resnet50(pretrained=True)
 model_ood.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
 model_ood.maxpool = nn.Identity()
 model_ood.fc = nn.Linear(model_ood.fc.in_features, 100)
