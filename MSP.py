@@ -191,12 +191,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_ood = WideResNet(
     depth=28,
     widen_factor=10,
-    dropout_rate=0.3,
+    dropout_rate=0.0,
     num_classes=100
 )
 model_ood = model_ood.to(device)
 
-def train(model, loader, epochs=200):
+def train(model, loader, epochs=500):
     start = time.time()
     criterion = nn.CrossEntropyLoss()
 
@@ -209,7 +209,7 @@ def train(model, loader, epochs=200):
 
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
-        milestones=[100, 150],
+        milestones=[250,375],
         gamma=0.1
     )
 
@@ -483,16 +483,19 @@ def test_energy(model, id_loader, ood_loader, T=1.0):
     print(f"{hours}h {minutes}m {seconds:.2f}s")
 
 def extract_features(model, x):
-    # ResNet18用
+
     x = model.conv1(x)
-    x = model.bn1(x)
-    x = model.relu(x)
+
     x = model.layer1(x)
     x = model.layer2(x)
     x = model.layer3(x)
-    x = model.layer4(x)
-    x = model.avgpool(x)
-    x = torch.flatten(x, 1)
+
+    x = F.relu(model.bn1(x))
+
+    x = F.avg_pool2d(x, 8)
+
+    x = x.view(x.size(0), -1)
+
     return x
 
 def compute_class_stats(model, loader, num_classes=100):
